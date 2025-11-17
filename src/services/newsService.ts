@@ -59,32 +59,8 @@ export const fetchTopHeadlines = async (
   category?: string
 ): Promise<NewsResponse> => {
   try {
-    // На web в production используем Netlify Function для обхода CORS
-    if (shouldUseProxy()) {
-      const params: any = {
-        pageSize: PAGE_SIZE,
-        page,
-        language: 'en',
-      };
-
-      if (query) {
-        params.q = query;
-      } else {
-        params.country = 'us';
-      }
-
-      if (category && category !== 'all') {
-        params.category = category;
-      }
-
-      const response = await axios.post('/.netlify/functions/news-proxy', {
-        endpoint: '/top-headlines',
-        ...params,
-      });
-      return response.data;
-    }
-
-    // На мобильных платформах и localhost используем прямой доступ
+    // Всегда используем прямой доступ к NewsAPI
+    // NewsAPI поддерживает CORS для браузерных запросов
     const params: any = {
       apiKey: API_KEY,
       pageSize: PAGE_SIZE,
@@ -146,31 +122,7 @@ export const searchNews = async (
   filters?: NewsFilters
 ): Promise<NewsResponse> => {
   try {
-    // На web в production используем Netlify Function
-    if (shouldUseProxy()) {
-      const params: any = {
-        q: query || 'news',
-        pageSize: PAGE_SIZE,
-        page,
-        sortBy: filters?.sortBy || 'publishedAt',
-      };
-
-      if (filters?.fromDate) {
-        params.from = filters.fromDate;
-      }
-
-      if (filters?.toDate) {
-        params.to = filters.toDate;
-      }
-
-      const response = await axios.post('/.netlify/functions/news-proxy', {
-        endpoint: '/everything',
-        ...params,
-      });
-      return response.data;
-    }
-
-    // На мобильных платформах и localhost используем прямой доступ
+    // Всегда используем прямой доступ к NewsAPI
     const params: any = {
       apiKey: API_KEY,
       q: query || 'news', // Запрос обязателен для эндпоинта /everything
