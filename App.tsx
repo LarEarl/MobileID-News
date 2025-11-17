@@ -1,3 +1,14 @@
+/**
+ * Главный компонент приложения NewsApp
+ * 
+ * Инициализирует:
+ * - Навигацию приложения (Stack Navigator с биометрической защитой)
+ * - Слушатели push-уведомлений
+ * - Провайдеры для безопасных зон и жестов
+ * 
+ * @component
+ */
+
 import React, { useEffect, useRef } from 'react';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
