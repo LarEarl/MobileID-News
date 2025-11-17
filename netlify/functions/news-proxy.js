@@ -47,10 +47,11 @@ exports.handler = async (event, context) => {
     console.log('Environment variables available:', Object.keys(process.env).filter(key => !key.includes('SECRET')));
     
     // Получаем API ключ из переменных окружения
-    const API_KEY = process.env.NEWS_API_KEY;
+    const API_KEY = process.env.NEWS_API_KEY || 'be48b1d18ccf43fd8b3e6b7f0f72cb3f'; // ВРЕМЕННЫЙ FALLBACK ДЛЯ ТЕСТА
     
     console.log('API_KEY exists:', !!API_KEY);
     console.log('API_KEY length:', API_KEY ? API_KEY.length : 0);
+    console.log('API_KEY source:', process.env.NEWS_API_KEY ? 'from env' : 'hardcoded fallback');
     
     if (!API_KEY) {
       console.error('❌ NEWS_API_KEY not found in environment variables');
