@@ -17,6 +17,29 @@ exports.handler = async (event, context) => {
     };
   }
 
+  // DEBUG ENDPOINT - удалить после диагностики
+  if (event.path && event.path.includes('debug')) {
+    const API_KEY = process.env.NEWS_API_KEY;
+    return {
+      statusCode: 200,
+      headers,
+      body: JSON.stringify({
+        message: '🔍 Debug Info',
+        hasApiKey: !!API_KEY,
+        apiKeyLength: API_KEY ? API_KEY.length : 0,
+        apiKeyPreview: API_KEY ? `${API_KEY.substring(0, 4)}...${API_KEY.substring(API_KEY.length - 4)}` : 'NOT_FOUND',
+        allEnvVars: Object.keys(process.env).filter(key => 
+          !key.includes('SECRET') && 
+          !key.includes('TOKEN') && 
+          !key.includes('PASSWORD')
+        ).sort(),
+        envVarsCount: Object.keys(process.env).length,
+        nodeVersion: process.version,
+        timestamp: new Date().toISOString(),
+      }),
+    };
+  }
+
   try {
     // Логирование для отладки
     console.log('=== News Proxy Function Called ===');
