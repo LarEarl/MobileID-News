@@ -18,22 +18,36 @@ exports.handler = async (event, context) => {
   }
 
   try {
+    // Логирование для отладки
+    console.log('=== News Proxy Function Called ===');
+    console.log('HTTP Method:', event.httpMethod);
+    console.log('Environment variables available:', Object.keys(process.env).filter(key => !key.includes('SECRET')));
+    
     // Получаем API ключ из переменных окружения
     const API_KEY = process.env.NEWS_API_KEY;
     
+    console.log('API_KEY exists:', !!API_KEY);
+    console.log('API_KEY length:', API_KEY ? API_KEY.length : 0);
+    
     if (!API_KEY) {
-      console.error('NEWS_API_KEY not found in environment variables');
+      console.error('❌ NEWS_API_KEY not found in environment variables');
+      console.error('Available env vars:', Object.keys(process.env).join(', '));
       return {
         statusCode: 500,
         headers,
         body: JSON.stringify({
           error: 'API key not configured',
           message: 'Please set NEWS_API_KEY in Netlify environment variables',
+          debug: {
+            envVarsCount: Object.keys(process.env).length,
+            hasApiKey: !!process.env.NEWS_API_KEY,
+          },
         }),
       };
     }
 
     // Парсим тело запроса
+    console.log('Request body:', event.body);
     const { endpoint, ...params } = JSON.parse(event.body || '{}');
     
     if (!endpoint) {
@@ -48,8 +62,9 @@ exports.handler = async (event, context) => {
 
     const url = `https://newsapi.org/v2${endpoint}`;
     
-    console.log('Proxying request to:', url);
-    console.log('With params:', params);
+    console.log('✅ Proxying request to:', url);
+    console.log('📦 With params:', JSON.stringify(params));
+    console.log('🔑 Using API key:', API_KEY.substring(0, 4) + '...' + API_KEY.substring(API_KEY.length - 4));
     
     const response = await axios.get(url, {
       params: {
@@ -59,6 +74,7 @@ exports.handler = async (event, context) => {
       headers: {
         'User-Agent': 'NewsApp/1.0',
       },
+      timeout: 10000, // 10 секунд таймаут
     });
 
     return {
@@ -67,8 +83,23 @@ exports.handler = async (event, context) => {
       body: JSON.stringify(response.data),
     };
   } catch (error) {
-    console.error('Proxy error:', error.message);
-    console.error('Error details:', error.response?.data);
+    console.error('❌ Proxy error:', error.message);
+    console.error('Error stack:', error.stack);
+    console.error('Error response data:', error.response?.data);
+    console.error('Error response status:', error.response?.status);
+    console.error('Error config:', error.config?.url, error.config?.params);
+    
+    // Специальная обработка ошибки парсинга JSON
+    if (error instanceof SyntaxError) {
+      return {
+        statusCode: 400,
+        headers,
+        body: JSON.stringify({
+          error: 'Invalid JSON in request body',
+          message: error.message,
+        }),
+      };
+    }
     
     return {
       statusCode: error.response?.status || 500,
@@ -77,6 +108,7 @@ exports.handler = async (event, context) => {
         error: error.message,
         details: error.response?.data || error.toString(),
         statusCode: error.response?.status,
+        newsApiError: error.response?.data?.message || null,
       }),
     };
   }
